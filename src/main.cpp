@@ -1,7 +1,7 @@
 // #include <ESP8266WiFi.h>
 
-// const char* ssid = "KUNIU";
-// const char* password = "kuniu666";
+// const char* ssid = "";
+// const char* password = "";
 // WiFiServer server(23); // 使用TCP端口23
 
 // void setup() {
@@ -41,8 +41,8 @@
 
 // #include <ESP8266WiFi.h>
 
-// const char* ssid = "KUNIU";
-// const char* password = "kuniu666";
+// const char* ssid = "";
+// const char* password = "";
 // WiFiServer server(23); // 使用TCP端口23
 
 // void setup() {
@@ -81,97 +81,91 @@
 //     client.stop(); // 关闭客户端连接
 //   }
 // }
-
-
 #include <ESP8266WiFi.h>
 
-WiFiServer server(23); // 使用TCP端口23
-
-String ssid = "KUNIU";  // 默认SSID
-String password = "kuniu666";  // 默认密码
+WiFiServer server(23);
+WiFiClient persistentClient;  // 持久的客户端对象
+String inputBuffer = "";  // 用于累积输入数据，直到遇到换行符
+String ssid = "";  // 默认SSID，替换为你的网络SSID
+String password = "";  // 默认密码，替换为你的网络密码
 
 void handleCommand(String command, Print& output);
+void processInput(char c, Print& output);
 
 void setup() {
     Serial.begin(921600);
-    Serial.println("Send AT commands to configure WiFi settings.");
-    server.begin();
-}
-
-void connectToWiFi() {
-    Serial.print("Connecting to ");
-    Serial.print(ssid);
     WiFi.begin(ssid.c_str(), password.c_str());
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
     }
-    Serial.println("\nConnected to WiFi.");
-    Serial.print("Assigned IP address: ");
+    Serial.println("\nWiFi connected");
+    Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+    server.begin();
+    Serial.println("Server started");
 }
 
 void loop() {
-    static String inputBuffer = "";
-    WiFiClient client = server.accept(); // 接受新的客户端连接
-
-    if (client) {
-        while (client.connected()) {
-            while (client.available()) {
-                char c = client.read();
-                Serial.write(c);  // 直接将接收到的每个字符写入串口
-                inputBuffer += c;
-                
-                if (c == '\n') {
-                    if (inputBuffer.startsWith("AT")) {
-                        handleCommand(inputBuffer, client);
-                    } else {
-                        client.print(inputBuffer); // 回显接收到的数据
-                    }
-                    inputBuffer = ""; // 重置输入缓冲区
-                }
-            }
+    // 尝试接受新的客户端连接
+    if (!persistentClient || !persistentClient.connected()) {
+        persistentClient = server.available();
+        if (persistentClient) {
+            Serial.println("Client Connected");
         }
-        client.stop(); // 关闭客户端连接
+    }
+
+    // 处理来自TCP客户端的数据
+    while (persistentClient && persistentClient.connected() && persistentClient.available() > 0) {
+        char c = persistentClient.read();
+        Serial.write(c);  // 将TCP客户端的数据写入串口
+        processInput(c, persistentClient);
     }
 
     // 处理来自串口的数据
-    while (Serial.available()) {
+    while (Serial.available() > 0) {
         char c = Serial.read();
-        if (c == '\n') {
-            if (inputBuffer.startsWith("AT")) {
-                handleCommand(inputBuffer, Serial);
-            } else {
-                Serial.print(inputBuffer);
-            }
-            inputBuffer = "";
-        } else {
-            inputBuffer += c;
+        if (persistentClient && persistentClient.connected()) {
+            persistentClient.write(c);  // 将串口的数据写入TCP客户端
         }
+        processInput(c, Serial);
+    }
+}
+
+void processInput(char c, Print& output) {
+    if (c == '\n' || c == '\r') {
+        if (inputBuffer.startsWith("AT")) {
+            handleCommand(inputBuffer, output);
+        } else {
+            output.print(inputBuffer + "\r\n"); // 回显非命令输入
+        }
+        inputBuffer = ""; // 重置输入缓冲区
+    } else {
+        inputBuffer += c; // 累积输入直到换行
     }
 }
 
 void handleCommand(String command, Print& output) {
     command.trim();
     if (command.startsWith("AT+GETIP")) {
-        output.println("OK: " + WiFi.localIP().toString());
-    } else if (command.startsWith("AT+RST")) {
-        ESP.restart();
+        output.println("IP: " + WiFi.localIP().toString());
     } else if (command.startsWith("AT+SSID=")) {
         ssid = command.substring(8);
-        output.println("OK: SSID set to " + ssid);
+        WiFi.begin(ssid.c_str(), password.c_str());
+        output.println("SSID set to " + ssid);
     } else if (command.startsWith("AT+PASSWD=")) {
         password = command.substring(10);
-        output.println("OK: Password set to " + password);
+        WiFi.begin(ssid.c_str(), password.c_str());
+        output.println("Password set to " + password);
     } else if (command.startsWith("AT+CONNECT")) {
-        connectToWiFi();
-        output.println("OK: Connected to WiFi.");
+        WiFi.begin(ssid.c_str(), password.c_str());
+        output.println("Connecting...");
     } else if (command.startsWith("AT+STATUS")) {
-        String status = "Current SSID: " + WiFi.SSID() +
-                        "\nCurrent IP: " + WiFi.localIP().toString() +
-                        "\nConfigured SSID: " + ssid +
-                        "\nConfigured Password: " + password;
-        output.println("STATUS: " + status);
+        output.println("SSID: " + ssid);
+        output.println("Password: " + password);
+        output.println("IP: " + WiFi.localIP().toString());
+    } else if (command.startsWith("AT+RST")) {
+        ESP.restart();
     } else {
         output.println("ERROR: Unknown command");
     }
