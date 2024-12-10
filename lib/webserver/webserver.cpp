@@ -66,6 +66,9 @@ void MyWebServer::setupRoutes()
     server->on("/api/log/clear", HTTP_POST, [this]()
                { this->handleClearLog(); });
 
+    server->on("/api/system/command", HTTP_POST, [this]() 
+               { this->handleSystemCommand(); });
+
     // Handle CORS
     server->on("/api/setVW", HTTP_OPTIONS, [this]()
                {
@@ -542,8 +545,7 @@ void MyWebServer::handleSettings()
 }
 
 // 调试页面处理函数
-void MyWebServer::handleDebug()
-{
+void MyWebServer::handleDebug() {
     String html = "<!DOCTYPE html><html><head>";
     html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
     html += "<title>Debug Console</title>";
@@ -582,24 +584,25 @@ void MyWebServer::handleDebug()
 
     html += "function sendCommand(){";
     html += "const cmd=document.getElementById('debug-cmd').value;";
+    html += "addLog('> '+cmd);"; // 在发送请求前先将命令显示在调试日志中
     html += "fetch('/api/system/command',{method:'POST',headers:{'Content-Type':'application/json'},";
     html += "body:JSON.stringify({command:cmd})})";
-    html += ".then(response=>response.json())";
-    html += ".then(data=>{addLog('> '+cmd);addLog(JSON.stringify(data));})";
-    html += ".catch(error=>addLog('Error: '+error))";
+    html += ".then(response=>{if(!response.ok)throw new Error('Network response was not ok');return response.json();})";
+    html += ".then(data=>{console.log('Server response:',data);addLog(JSON.stringify(data));})";
+    html += ".catch(error=>{console.error('Error:',error);addLog('Error: '+error);});";
     html += "document.getElementById('debug-cmd').value='';}";
 
     html += "function runTest(type){";
+    html += "addLog('Running test: '+type);"; // 在发送请求前先将测试类型显示在调试日志中
     html += "fetch('/api/system/command',{method:'POST',headers:{'Content-Type':'application/json'},";
     html += "body:JSON.stringify({command:'test_'+type})})";
-    html += ".then(response=>response.json())";
-    html += ".then(data=>addLog(JSON.stringify(data)))";
-    html += ".catch(error=>addLog('Error: '+error));}";
+    html += ".then(response=>{if(!response.ok)throw new Error('Network response was not ok');return response.json();})";
+    html += ".then(data=>{console.log('Server response:',data);addLog(JSON.stringify(data));})";
+    html += ".catch(error=>{console.error('Error:',error);addLog('Error: '+error);});}";
 
     html += "document.getElementById('debug-cmd').addEventListener('keyup',function(event){";
     html += "if(event.key==='Enter')sendCommand();});";
 
-    // html += getCommonScript();
     html += "</script></body></html>";
 
     server->send(200, "text/html", html);
