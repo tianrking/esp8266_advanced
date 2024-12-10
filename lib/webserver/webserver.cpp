@@ -595,8 +595,7 @@ void MyWebServer::handleDebug()
 }
 
 // 日志页面处理函数
-void MyWebServer::handleLog()
-{
+void MyWebServer::handleLog() {
     String html = "<!DOCTYPE html><html><head>";
     html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
     html += "<title>System Logs</title>";
@@ -618,26 +617,32 @@ void MyWebServer::handleLog()
     html += "</div>";
 
     // JavaScript
-    html += "function refreshLogs(){";
-    html += "fetch('/api/log/data')";
-    html += ".then(response=>response.json())";
-    html += ".then(data=>{";
-    html += "const logContent=document.getElementById('log-content');";
-    html += "logContent.innerHTML=data.join('\\n');";
-    html += "logContent.scrollTop=logContent.scrollHeight;";
-    html += "}).catch(error=>alert('Error: '+error));}";
+    html += "<script>";
+    html += "function refreshLogs() {";
+    html += "  fetch('/api/log/data')";
+    html += "    .then(response => response.json())";
+    html += "    .then(data => {";
+    html += "      const logContent = document.getElementById('log-content');";
+    html += "      logContent.innerHTML = data.join('\\n');";
+    html += "      logContent.scrollTop = logContent.scrollHeight;";
+    html += "    })";
+    html += "    .catch(error => alert('Error: ' + error));";
+    html += "}";
 
-    html += "function clearLogs(){";
-    html += "if(confirm('Clear all logs?')){";
-    html += "fetch('/api/log/clear',{method:'POST'})";
-    html += ".then(response=>response.json())";
-    html += ".then(()=>{";
-    html += "document.getElementById('log-content').innerHTML='';";
-    html += "alert('Logs cleared');";
-    html += "}).catch(error=>alert('Error: '+error));}}";
+    html += "function clearLogs() {";
+    html += "  if (confirm('Clear all logs?')) {";
+    html += "    fetch('/api/log/clear', { method: 'POST' })";
+    html += "      .then(response => response.json())";
+    html += "      .then(() => {";
+    html += "        document.getElementById('log-content').innerHTML = '';";
+    html += "        alert('Logs cleared');";
+    html += "      })";
+    html += "      .catch(error => alert('Error: ' + error));";
+    html += "  }";
+    html += "}";
 
     html += "refreshLogs();";                 // 初始加载日志
-    html += "setInterval(refreshLogs,5000);"; // 每5秒自动刷新
+    html += "setInterval(refreshLogs, 5000);"; // 每5秒自动刷新
 
     html += getCommonScript();
     html += "</script></body></html>";

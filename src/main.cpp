@@ -2,8 +2,8 @@
 #include <ESP8266WiFi.h>
 #include "webserver.h"
 
-const char* ssid = "KUNIU";     // 替换为你的WiFi名称
-const char* password = "kuniu666";  // 替换为你的WiFi密码
+const char* ssid = "POCO";     // 替换为你的WiFi名称
+const char* password = "22222222";  // 替换为你的WiFi密码
 
 MyWebServer webServer;
 
