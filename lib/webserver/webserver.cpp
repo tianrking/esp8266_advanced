@@ -165,8 +165,7 @@ String MyWebServer::getCommonScript()
 }
 
 // 主页面 Handler
-void MyWebServer::handleRoot()
-{
+void MyWebServer::handleRoot() {
     String html = "<!DOCTYPE html><html><head>";
     html += "<meta name='viewport' content='width=device-width, initial-scale=1'>";
     html += "<title>ESP8266 Robot</title>";
@@ -181,7 +180,7 @@ void MyWebServer::handleRoot()
     html += "<div class='control-item'>";
     html += "<p>IP Address: " + WiFi.localIP().toString() + "</p>";
     html += "<p>MAC Address: " + WiFi.macAddress() + "</p>";
-    html += "<p>Uptime: <span id='uptime'>0</span> seconds</p>";
+    html += "<p>Uptime: <span id='uptime'>...</span></p>";
     html += "</div></div>";
 
     // 快速访问卡片
@@ -195,11 +194,19 @@ void MyWebServer::handleRoot()
 
     html += "</div>";
 
-    // 更新时间的JavaScript
+    // 更新运行时间的JavaScript
     html += "<script>";
-    html += "setInterval(()=>{";
-    html += "document.getElementById('uptime').textContent=Math.floor(Date.now()/1000);";
-    html += "},1000);</script>";
+    html += "function updateUptime() {";
+    html += "  fetch('/api/status')";
+    html += "    .then(response => response.json())";
+    html += "    .then(data => {";
+    html += "      document.getElementById('uptime').textContent = data.uptime;";
+    html += "    })";
+    html += "    .catch(error => console.error('Error:', error));";
+    html += "}";
+    html += "updateUptime();";
+    html += "setInterval(updateUptime, 1000);";
+    html += "</script>";
 
     html += "</body></html>";
     server->send(200, "text/html", html);
