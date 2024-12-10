@@ -403,6 +403,17 @@ void MyWebServer::handleControl()
 
     // JavaScript functions
     html += "<script>";
+    
+    html += "function updateStatus(text){document.getElementById('status').innerText=JSON.stringify(text,null,2)}";
+    html += "function getStatus(){fetch('/api/status')";
+    html += ".then(response=>response.json())";
+    html += ".then(data=>updateStatus(data))";
+    html += ".catch(error=>updateStatus('Error: '+error));}";
+    html += "function getVersion(){fetch('/api/version')";
+    html += ".then(response=>response.json())";
+    html += ".then(data=>updateStatus(data))";
+    html += ".catch(error=>updateStatus('Error: '+error));}";
+
     html += "function setVW(){";
     html += "const v=parseFloat(document.getElementById('v_speed').value);";
     html += "const w=parseFloat(document.getElementById('w_speed').value);";
