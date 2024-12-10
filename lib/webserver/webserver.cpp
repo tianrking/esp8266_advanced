@@ -429,7 +429,7 @@ void MyWebServer::handleControl()
     html += "body:JSON.stringify({mode:mode})}).then(response=>response.json())";
     html += ".then(data=>updateStatus(data)).catch(error=>updateStatus('Error: '+error));}";
 
-    html += getCommonScript();
+    // html += getCommonScript();
     html += "</script></body></html>";
 
     server->send(200, "text/html", html);
@@ -524,7 +524,7 @@ void MyWebServer::handleSettings()
     html += ".then(data=>alert('Device rebooting...'))";
     html += ".catch(error=>alert('Error: '+error));}";
 
-    html += getCommonScript();
+    // html += getCommonScript();
     html += "</script></body></html>";
 
     server->send(200, "text/html", html);
@@ -588,7 +588,7 @@ void MyWebServer::handleDebug()
     html += "document.getElementById('debug-cmd').addEventListener('keyup',function(event){";
     html += "if(event.key==='Enter')sendCommand();});";
 
-    html += getCommonScript();
+    // html += getCommonScript();
     html += "</script></body></html>";
 
     server->send(200, "text/html", html);
@@ -644,7 +644,7 @@ void MyWebServer::handleLog() {
     html += "refreshLogs();";                 // 初始加载日志
     html += "setInterval(refreshLogs, 5000);"; // 每5秒自动刷新
 
-    html += getCommonScript();
+    // html += getCommonScript();
     html += "</script></body></html>";
 
     server->send(200, "text/html", html);
@@ -716,7 +716,7 @@ void MyWebServer::handleSensor()
     html += "updateSensorData();"; // 初始更新
     html += "toggleUpdate();";     // 开始自动更新
 
-    html += getCommonScript();
+    // html += getCommonScript();
     html += "</script></body></html>";
 
     server->send(200, "text/html", html);
@@ -927,7 +927,7 @@ void MyWebServer::handleMode() {
     html += ".then(data=>alert('Parameters saved'))";
     html += ".catch(error=>alert('Error: '+error));}";
     
-    html += getCommonScript();
+    // html += getCommonScript();
     html += "</script></body></html>";
     
     server->send(200, "text/html", html);
@@ -989,7 +989,7 @@ void MyWebServer::handleAdvanced() {
     html += ".then(data=>alert('Network settings saved'))";
     html += ".catch(error=>alert('Error: '+error));}";
     
-    html += getCommonScript();
+    // html += getCommonScript();
     html += "</script></body></html>";
     
     server->send(200, "text/html", html);
